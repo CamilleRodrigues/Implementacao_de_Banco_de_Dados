@@ -50,8 +50,128 @@ ALTER TABLE LIVRO_AUTOR_ESCRITO ADD CONSTRAINT FK_LIVRO_AUTOR_ESCRITO_2
     REFERENCES AUTOR (id);
 
 
-INSERT INTO CATEGORIA (descricao) VALUES ('Literatura Juvenil');
+INSERT INTO CATEGORIA (descricao) VALUES ('Literatura Juvenil'); 
+INSERT INTO CATEGORIA (descricao) VALUES ('Ficção Científica'); 
+INSERT INTO CATEGORIA (descricao) VALUES ('Humor');
 
 SELECT C.codigo, C.descricao
 FROM CATEGORIA AS C
-WHERE C.descricao LIKE '%Juve%';
+WHERE C.descricao LIKE '%Juve%'
+OR C.descricao LIKE '%Cie%'
+OR C.descricao LIKE 'Hu%';
+
+INSERT INTO EDITORA (nome) VALUES ('Rocco');
+INSERT INTO EDITORA (nome) VALUES ('Wmf Martins Fontes');
+INSERT INTO EDITORA (nome) VALUES ('Casa da Palavra');
+INSERT INTO EDITORA (nome) VALUES ('Belas Letras');
+INSERT INTO EDITORA (nome) VALUES ('Matrix');
+
+SELECT E.id, E.nome
+FROM EDITORA AS E
+WHERE E.nome LIKE 'R%'
+OR E.nome LIKE 'W%'
+OR E.nome LIKE 'C%'
+OR E.nome LIKE 'B%'
+OR E.nome LIKE 'M%';
+
+INSERT INTO AUTOR (nome, nacionalidade) VALUES ('J. K. Rowling', 'Inglaterra');
+INSERT INTO AUTOR (nome, nacionalidade) VALUES ('Clive Staples Lewis', 'Inglaterra');
+INSERT INTO AUTOR (nome, nacionalidade) VALUES ('Affonso Solano', 'Brasil');
+INSERT INTO AUTOR (nome, nacionalidade) VALUES ('Marcos Piangers', 'Brasil');
+INSERT INTO AUTOR (nome, nacionalidade) VALUES ('Ciro Botelho - Tiririca', 'Brasil');
+INSERT INTO AUTOR (nome, nacionalidade) VALUES ('Bianca Mól', 'Brasil');
+
+
+SELECT A.id, A.nome, A.nacionalidade
+FROM AUTOR AS A
+WHERE A.nome LIKE '%ing'
+OR A.nome LIKE '%wis'
+OR A.nome LIKE '%ano'
+OR A.nome LIKE '%ers'
+OR A.nome LIKE '%lho'
+OR A.nome LIKE '%Mól';
+
+INSERT INTO LIVRO (ISBN, titulo, ano) VALUES (8532511015, 'Harry Potter e A Pedra Filosofal', 2000);
+INSERT INTO LIVRO (ISBN, titulo, ano) VALUES (9788578270698, 'As Crônicas de Nárnia', 2009);
+INSERT INTO LIVRO (ISBN, titulo, ano) VALUES (9788577343348, 'O Espadachim de Carvão', 2013);
+INSERT INTO LIVRO (ISBN, titulo, ano) VALUES (9788581742358, 'O Papai é Pop', 2015);
+INSERT INTO LIVRO (ISBN, titulo, ano) VALUES (9788582302026, 'Pior Que Tá Não Fica', 2015);
+INSERT INTO LIVRO (ISBN, titulo, ano) VALUES (9788577345670, 'Garota Desdobrável', 2015);
+INSERT INTO LIVRO (ISBN, titulo, ano) VALUES (8532512062, 'Harry Potter e o prisioneiro de Azkaban', 2015);
+
+UPDATE LIVRO
+SET FK_EDITORA_id = 1, FK_CATEGORIA_codigo = 1
+WHERE ISBN = '8532511015';
+
+UPDATE LIVRO
+SET FK_EDITORA_id = 2, FK_CATEGORIA_codigo = 2
+WHERE ISBN = '9788578270698';
+
+UPDATE LIVRO
+SET FK_CATEGORIA_codigo = 1
+WHERE ISBN = '9788578270698';
+
+UPDATE LIVRO
+SET FK_EDITORA_id = 3, FK_CATEGORIA_codigo = 2
+WHERE ISBN = '9788577343348';
+
+UPDATE LIVRO
+SET FK_EDITORA_id = 4, FK_CATEGORIA_codigo = 3
+WHERE ISBN = '9788581742358';
+
+UPDATE LIVRO
+SET FK_EDITORA_id = 5, FK_CATEGORIA_codigo = 3
+WHERE ISBN = '9788582302026';
+
+UPDATE LIVRO
+SET FK_EDITORA_id = 5, FK_CATEGORIA_codigo = 1
+WHERE ISBN = '9788577345670';
+
+UPDATE LIVRO
+SET FK_EDITORA_id = 1, FK_CATEGORIA_codigo = 1
+WHERE ISBN = '8532512062';
+
+SELECT L.ISBN, L.titulo, L.ano, L.FK_EDITORA_id, L.FK_CATEGORIA_codigo
+FROM LIVRO AS L
+WHERE L.titulo LIKE '%Pedra%'
+OR L.titulo LIKE '%Nárnia'
+OR L.titulo LIKE '%Carvão'
+OR L.titulo LIKE '%Papai%'
+OR L.titulo LIKE '%Fica'
+OR L.titulo LIKE 'Gar%'
+OR L.titulo LIKE '%prisio%'
+ORDER BY L.titulo ASC
+
+INSERT INTO LIVRO_AUTOR_ESCRITO (FK_LIVRO_ISBN, FK_AUTOR_id) VALUES (8532511015, 1);
+INSERT INTO LIVRO_AUTOR_ESCRITO (FK_LIVRO_ISBN, FK_AUTOR_id) VALUES (9788578270698, 2);
+INSERT INTO LIVRO_AUTOR_ESCRITO (FK_LIVRO_ISBN, FK_AUTOR_id) VALUES (9788577343348, 3);
+INSERT INTO LIVRO_AUTOR_ESCRITO (FK_LIVRO_ISBN, FK_AUTOR_id) VALUES (9788581742358, 4);
+INSERT INTO LIVRO_AUTOR_ESCRITO (FK_LIVRO_ISBN, FK_AUTOR_id) VALUES (9788582302026, 5);
+INSERT INTO LIVRO_AUTOR_ESCRITO (FK_LIVRO_ISBN, FK_AUTOR_id) VALUES (9788577345670, 6);
+INSERT INTO LIVRO_AUTOR_ESCRITO (FK_LIVRO_ISBN, FK_AUTOR_id) VALUES (8532512062, 1);
+
+SELECT *
+FROM LIVRO_AUTOR_ESCRITO;
+
+SELECT A.nome, A.id, L.ISBN, L.titulo, L.ano, E.nome, C.descricao
+FROM LIVRO AS L
+JOIN LIVRO_AUTOR_ESCRITO AS LAE ON L.ISBN = LAE.FK_LIVRO_ISBN
+JOIN AUTOR AS A ON LAE.FK_AUTOR_id = A.id
+JOIN EDITORA AS E ON L.FK_EDITORA_id = E.id
+JOIN CATEGORIA AS C ON L.FK_CATEGORIA_codigo = C.codigo
+ORDER BY A.nome ASC;
+
+SELECT L.ISBN, L.titulo, L.ano, E.nome, C.descricao
+FROM LIVRO AS L
+JOIN EDITORA AS E ON L.FK_EDITORA_id = E.id
+JOIN CATEGORIA AS C ON L.FK_CATEGORIA_codigo = C.codigo
+WHERE C.descricao LIKE '%Juv%'
+ORDER BY L.ano ASC;
+
+SELECT L.ISBN, L.titulo, L.ano, E.nome, C.descricao
+FROM LIVRO AS L
+JOIN EDITORA AS E ON L.FK_EDITORA_id = E.id
+JOIN CATEGORIA AS C ON L.FK_CATEGORIA_codigo = C.codigo
+WHERE (C.descricao LIKE 'humor%' OR C.descricao LIKE '%Cien%')
+AND L.ano BETWEEN 2000 AND 2010
+ORDER BY L.ano; 
