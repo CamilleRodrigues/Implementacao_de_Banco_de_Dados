@@ -117,3 +117,138 @@ UNION
 SELECT F.Pnome, F.Sexo, F.Datanasc
 FROM FUNCIONARIO AS F;
 GO
+
+-- AULA 19/08
+-- SELF JOIN 
+SELECT F.Pnome AS 'funcionario', S.Pnome AS 'Surpevisor'
+FROM FUNCIONARIO AS F
+JOIN FUNCIONARIO AS S -- S de supervisor
+ON F.Cpf_supervisor = S.Cpf;
+
+-- UNION
+EXEC sp_help FUNCIONARIO;
+EXEC sp_help DEPENDENTE;
+
+SELECT F.Pnome, F.Datanasc, F.Sexo
+FROM FUNCIONARIO AS F
+UNION ALL
+SELECT D.Nome_dependente, D.Datanasc, D.Sexo
+FROM DEPENDENTE AS D
+
+SELECT LD.Dlocal
+FROM LOCALIZACAO_DEP AS LD
+UNION 
+SELECT P.Projlocal
+FROM PROJETO AS P
+
+-- EXCEPT 
+SELECT Pnome, Unome
+FROM FUNCIONARIO
+WHERE Cpf IN (
+	SELECT F.Cpf FROM FUNCIONARIO AS F 
+	EXCEPT
+	SELECT D.Cpf_gerente FROM DEPARTAMENTO AS D 
+);
+
+SELECT Cpf FROM FUNCIONARIO
+EXCEPT
+SELECT DISTINCT Cpf_supervisor FROM FUNCIONARIO
+
+-- INTERSEC
+SELECT Cpf FROM FUNCIONARIO
+INTERSECT
+SELECT DISTINCT Cpf_supervisor FROM FUNCIONARIO
+
+-- GROUP BY
+SELECT *
+FROM FUNCIONARIO AS F
+JOIN DEPARTAMENTO AS D
+ON F.Dnr = D.Dnumero;
+
+SELECT D.Dnome AS 'Nome do Departamento', COUNT (F.Cpf) AS 'Número de Funcionários' 
+FROM FUNCIONARIO AS F
+JOIN DEPARTAMENTO AS D
+ON F.Dnr = D.Dnumero
+GROUP BY D.Dnome;
+
+SELECT D.Dnome AS 'Nome do Departamento', SUM (F.Salario) AS 'Somatório dos Salários' 
+FROM FUNCIONARIO AS F
+JOIN DEPARTAMENTO AS D
+ON F.Dnr = D.Dnumero
+GROUP BY D.Dnome;
+
+SELECT P.Projnome AS 'Nome do Departamento', AVG (TE.Horas) AS 'Média das horas' 
+FROM TRABALHA_EM AS TE
+JOIN PROJETO AS P
+ON P.Projnumero = TE.Pnr
+GROUP BY P.Projnome;
+
+SELECT F.Sexo AS 'Sexo', COUNT (F.Cpf) AS 'Número de Funcionários' 
+FROM FUNCIONARIO AS F
+GROUP BY F.Sexo;
+
+SELECT D.Dnome AS 'Nome do Departamento', MAX (F.Salario) AS 'Maior Salário' 
+FROM FUNCIONARIO AS F
+JOIN DEPARTAMENTO AS D
+ON F.Dnr = D.Dnumero
+GROUP BY D.Dnome;
+
+SELECT P.Projlocal AS 'Local', COUNT (P.Projnome) AS 'Números de Projetos' 
+FROM PROJETO AS P 
+GROUP BY P.Projlocal;
+
+-- HAVING
+SELECT D.Dnome AS 'Nome do Departamento', COUNT (F.Cpf) AS 'Número de Funcionários' 
+FROM FUNCIONARIO AS F
+JOIN DEPARTAMENTO AS D
+ON F.Dnr = D.Dnumero
+GROUP BY D.Dnome
+HAVING COUNT (F.Cpf) > 3;
+
+SELECT P.Projnome AS 'Nome do Projeto', SUM (TE.Horas) AS 'Número de Horas' 
+FROM TRABALHA_EM AS TE
+JOIN PROJETO AS P
+ON TE.Pnr = P.Projnumero 
+GROUP BY P.Projnome
+HAVING SUM (TE.Horas) > 50;
+
+-- EXISTS
+SELECT *
+FROM FUNCIONARIO AS F
+WHERE EXISTS
+(SELECT 1 FROM DEPARTAMENTO AS D WHERE F.Cpf = D.Cpf_gerente);
+
+-- Listar departamentos que possuem projetos associados (SLIDE 43)
+SELECT *
+FROM FUNCIONARIO AS F
+WHERE EXISTS
+(SELECT 1 FROM DEPARTAMENTO AS D WHERE F.Cpf = D.Cpf_gerente);
+
+-- ANY/ALL
+SELECT F.Salario
+FROM FUNCIONARIO AS F
+JOIN DEPARTAMENTO AS D
+ON F.Dnr = D.Dnumero
+WHERE D.Dnome LIKE '%Adm%';
+
+SELECT *
+FROM FUNCIONARIO
+WHERE Salario >  ANY ( -- Ganha mais que alguém da Adm.
+						SELECT F.Salario
+						FROM FUNCIONARIO AS F
+						JOIN DEPARTAMENTO AS D
+						ON F.Dnr = D.Dnumero
+						WHERE D.Dnome LIKE '%Adm%'
+);
+
+SELECT *
+FROM FUNCIONARIO
+WHERE Salario >  ALL ( -- Ganha mais que todos da Adm.
+						SELECT F.Salario
+						FROM FUNCIONARIO AS F
+						JOIN DEPARTAMENTO AS D
+						ON F.Dnr = D.Dnumero
+						WHERE D.Dnome LIKE '%Adm%'
+);
+
+-- Encontrar projetos que exigem mais horas do que todos os projetos no local 'São Paulo' (SLIDE 49)
