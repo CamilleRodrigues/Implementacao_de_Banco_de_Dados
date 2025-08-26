@@ -1,0 +1,70 @@
+-- AULA 26/08
+-- DECLARE
+-- Declarando variáveis
+DECLARE @valor INT,
+		@texto VARCHAR(40),
+		@data_nasc DATE,
+		@dinheiro MONEY;
+
+-- SET / SELECT
+-- Setando os valores das variáveis
+SET @valor = 23;
+SET @texto = 'Camille da Silva Rodrigues';
+SET @data_nasc = GETDATE();
+SET @dinheiro = 50.50;
+
+-- Exibir os valores armazenados nas variáveis
+SELECT  @valor AS 'Idade', 
+		@texto AS 'Nome', 
+		@data_nasc AS 'U_Acesso',
+		@dinheiro AS 'V.Compra';
+
+-- PRINT
+PRINT 'O valor contido na variável @texto é: ' + @texto;
+PRINT 'O valor contido na variável @valor é: ' + CAST(@valor AS VARCHAR(10));
+
+-- BANCO EMPRESA
+-- (1)
+DECLARE @dpt_num INT;
+SET @dpt_num = 4;
+
+SELECT *
+FROM DEPARTAMENTO AS D
+WHERE D.Dnumero = @dpt_num;
+
+-- (2)
+-- SELECT para a inserção de valores em uma variável
+DECLARE @nome VARCHAR(40),
+		@salario MONEY,
+		@porcentagem DECIMAL(10, 2),
+		@novo_salario MONEY;
+SET @nome = 'Jennifer';
+SET @porcentagem = 10;
+
+SELECT @salario = F.salario
+FROM FUNCIONARIO AS F
+WHERE F.Pnome = @nome;
+
+SET @novo_salario = @salario*(1+@porcentagem/100);
+
+SELECT @nome AS 'Nome', 
+	   @salario AS 'Salario',
+	   @porcentagem AS '%', @novo_salario AS 'Novo_Salario';
+
+-- (3) Continuação em ELSE IF
+DECLARE @idade INT,
+		@nome_pessoa VARCHAR(100),
+		@ano_atual INT,
+		@ano_nasc INT;
+SET @nome_pessoa = 'Jennifer';
+SET @ano_atual = YEAR(GETDATE());
+
+SELECT @ano_nasc = YEAR(F.Datanasc)
+FROM FUNCIONARIO AS F
+WHERE F.Pnome = @nome_pessoa;
+
+SET @idade = @ano_atual - @ano_nasc;
+PRINT 'A ' + @nome_pessoa +  ' tem ' + CAST(@idade AS VARCHAR(2)) + ' anos';
+
+
+
