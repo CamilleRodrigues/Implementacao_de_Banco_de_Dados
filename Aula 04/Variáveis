@@ -66,5 +66,66 @@ WHERE F.Pnome = @nome_pessoa;
 SET @idade = @ano_atual - @ano_nasc;
 PRINT 'A ' + @nome_pessoa +  ' tem ' + CAST(@idade AS VARCHAR(2)) + ' anos';
 
+-- CONCAT
+-- CONCAT OS VARCHAR
+SELECT CONCAT (F.Pnome,' ', F.Minicial, '. ', F.Unome) AS 'Nome completo'
+FROM FUNCIONARIO AS F
 
+-- IF E ELSE
+DECLARE @salario Decimal (10,2), 
+		@salario_medio Decimal (10,2),
+		@nome_funcionario VARCHAR (100); 
+SET @nome_funcionario = 'Jennifer';
 
+SELECT @salario = F.Salario 
+FROM FUNCIONARIO AS F
+WHERE F.Pnome = @nome_funcionario;
+
+SELECT @salario_medio = AVG(F.Salario)  
+FROM FUNCIONARIO AS F;
+
+PRINT @salario_medio;
+PRINT @salario;
+
+IF @salario > @salario_medio
+	BEGIN 
+		PRINT 'FUNCIONARIO GANHA MAIS QUE A MEDIA'
+	END
+ELSE
+	BEGIN
+		PRINT 'FUNCIONARIO NÃO GANHA MAIS QUE A MEIDA'
+	END
+
+DECLARE @nome_funcionario varchar(100),
+		@idade int;
+SET @nome_funcionario = 'Jennifer';
+
+SELECT @idade = DATEDIFF(YEAR, F.Datanasc, GETDATE())
+FROM FUNCIONARIO AS F
+WHERE F.Pnome = 'Jennifer';
+PRINT @idade;
+
+IF @idade >= 80
+	BEGIN
+		PRINT 'Já passou a hora de se aposentar'
+	END
+ELSE IF @idade >= 60
+	BEGIN
+		PRINT 'Próximo a aposentadoria'
+	end
+ELSE 
+	BEGIN
+		PRINT 'Não esta apto'
+	END
+
+DECLARE @nome_funcionario VARCHAR (100),
+		@datanasc DATE;
+SET @nome_funcionario = 'Jennifer';
+
+SELECT @datanasc = f.Datanasc
+FROM FUNCIONARIO AS f
+WHERE f.Pnome = @nome_funcionario;
+
+IF MONTH(GETDATE()) < MONTH(@datanasc) AND DAY(GETDATE()) < DAY(@datanasc) 
+   PRINT DATEDIFF(YEAR,@datanasc, GETDATE());							  
+   PRINT DATEDIFF(YEAR,@datanasc, GETDATE())-1;
