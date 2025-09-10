@@ -1,0 +1,138 @@
+-- Aula 09/09
+
+-- Exemplo 1
+CREATE PROCEDURE sp_meuNome
+AS
+BEGIN
+	PRINT 'Camille Rodrigues';
+END
+
+EXEC sp_meuNome;
+
+-- Exemplo 2
+CREATE PROCEDURE sp_FuncionarioPorDepartamento
+AS
+BEGIN
+	SELECT 
+		F.Pnome + ' ' + F.Minicial + '. ' + F.Unome AS 'Nome', 
+		D.Dnome AS 'Departamento'
+	FROM FUNCIONARIO AS F
+	INNER JOIN DEPARTAMENTO AS D
+	ON F.Dnr = D.Dnumero;
+END
+
+EXEC sp_FuncionarioPorDepartamento;
+
+-- Exemplo 3
+CREATE PROCEDURE sp_exibir_func
+WITH ENCRYPTION
+AS
+BEGIN
+	SELECT *
+	FROM FUNCIONARIO AS F;
+END
+
+EXEC sp_exibir_func;
+EXEC sp_helptext sp_exibir_func;
+
+-- Exemplo 4
+ALTER PROCEDURE sp_FuncionarioPorDepartamento
+	@nome_dpt VARCHAR(100)
+AS
+BEGIN
+	SELECT 
+		F.Pnome + ' ' + F.Minicial + '. ' + F.Unome AS 'Nome', 
+		D.Dnome AS 'Departamento'
+	FROM FUNCIONARIO AS F
+	FULL JOIN DEPARTAMENTO AS D
+	ON F.Dnr = D.Dnumero
+	WHERE D.Dnome = @nome_dpt;
+END
+
+EXEC sp_FuncionarioPorDepartamento 'Pesquisa';
+
+-- Exemplo 5
+ALTER PROCEDURE sp_atualizarSalario
+	@Cpf VARCHAR(11),
+	@Bonus DECIMAL(10, 2)
+AS
+BEGIN
+	UPDATE FUNCIONARIO 
+	SET Salario = Salario * (@Bonus/100 + 1)
+	WHERE Cpf = @Cpf;
+	IF @@ROWCOUNT = 0
+		PRINT 'Nenhum registro alterado'
+	ELSE	
+		SELECT 
+			F.Pnome + ' ' + F.Minicial + '. ' + F.Unome AS 'Nome',
+			F.Salario AS 'Salario'
+		FROM FUNCIONARIO AS F
+		WHERE F.Cpf = @Cpf;
+END
+
+SELECT * FROM FUNCIONARIO;
+EXEC sp_atualizarSalario '45345345376', 10;
+
+-- Exemplo 6
+ALTER PROCEDURE sp_novoDepartamento
+	@Dnome VARCHAR(20),
+	@Dnumero INT,
+	@Dlocal VARCHAR(20)
+
+AS
+BEGIN
+
+	IF EXISTS (SELECT 1 FROM DEPARTAMENTO WHERE Dnome = @Dnome)
+	BEGIN
+		PRINT 'Departamento já cadastrado';
+		SELECT @Dnumero = Dnumero FROM DEPARTAMENTO WHERE Dnome = @Dnome
+		INSERT INTO LOCALIZACAO_DEP (Dnumero, Dlocal)
+		VALUES(@Dnumero, @Dlocal);
+	END
+
+	ELSE	
+	BEGIN
+		INSERT INTO DEPARTAMENTO (Dnome, Dnumero)
+		VALUES (@Dnome, @Dnumero);
+		INSERT INTO LOCALIZACAO_DEP (Dnumero, Dlocal)
+		VALUES(@Dnumero, @Dlocal);
+	END
+
+END
+
+SELECT 
+	D.Dnome AS 'Nome do Departamento',
+	LD.Dlocal AS 'Localização'
+FROM DEPARTAMENTO AS D
+FULL JOIN LOCALIZACAO_DEP AS LD
+ON D.Dnumero = LD.Dnumero
+
+EXEC sp_novoDepartamento 'Produção', '11', 'São Paulo';
+
+SELECT * FROM DEPARTAMENTO
+
+-- Exemplo 7
+CREATE PROCEDURE sp_list_func_dpt
+	@nome_dpt VARCHAR(100) = NULL
+AS
+BEGIN
+	IF @nome_dpt IS NULL
+		SELECT 
+			F.Pnome + ' ' + F.Minicial + '. ' + F.Unome AS 'Nome',
+			D.Dnome AS 'Dpt'
+		FROM FUNCIONARIO AS F
+		FULL JOIN DEPARTAMENTO AS D
+		ON F.Dnr = D.Dnumero;
+	ELSE IF NOT EXISTS (SELECT 1 FROM DEPARTAMENTO WHERE @nome_dpt = Dnome)
+		PRINT 'Departamento não encontrado'
+	ELSE
+		SELECT 
+			F.Pnome + ' ' + F.Minicial + '. ' + F.Unome AS 'Nome',
+			D.Dnome AS 'Dpt'
+		FROM FUNCIONARIO AS F
+		FULL JOIN DEPARTAMENTO AS D
+		ON F.Dnr = D.Dnumero
+		WHERE @nome_dpt = D.Dnome;
+END
+
+EXEC sp_list_func_dpt 'Pesquisa'
