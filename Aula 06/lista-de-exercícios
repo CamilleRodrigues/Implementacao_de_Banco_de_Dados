@@ -1,0 +1,141 @@
+-- Crie uma procedure que permita inserir uma nova categoria na tabela "Categoria"
+
+ALTER PROCEDURE sp_novaCategoria
+	@TipoCategoria VARCHAR(20)
+
+AS
+BEGIN
+
+	IF EXISTS (SELECT 1 FROM CATEGORIA WHERE tipo_categoria = @TipoCategoria)
+	BEGIN
+		PRINT 'Departamento já cadastrado';
+		RETURN;
+	END
+
+	ELSE	
+	BEGIN
+		INSERT INTO CATEGORIA (tipo_categoria)
+		VALUES (@TipoCategoria);
+
+		PRINT 'Nova categoria inserida';
+	END
+
+END
+
+EXEC sp_novaCategoria @TipoCategoria = 'Terror';
+
+SELECT * FROM CATEGORIA
+
+-- Crie uma procedure para atualizar os detalhes de um livro (por exemplo, título, ano) pelo ISBN
+
+ALTER PROCEDURE sp_AtualizaDados
+	@ISBN VARCHAR(20),
+	@AtualizarTitulo VARCHAR(100),
+	@AtualizarAno INT
+
+AS
+BEGIN 
+	IF NOT EXISTS (SELECT 1 FROM LIVRO WHERE isbn = @ISBN)
+	BEGIN
+		PRINT 'Livro já atualizado';
+		RETURN;
+	END
+
+	ELSE
+	UPDATE LIVRO
+	SET titulo = @AtualizarTitulo,
+		ano = @AtualizarAno
+	WHERE isbn = @ISBN;
+
+	PRINT 'Livro atualizado!';
+END
+
+EXEC sp_AtualizaDados 
+	 @ISBN = '9788577345670', 
+	 @AtualizarTitulo = 'Garota Desdobrável', 
+	 @AtualizarAno = 2015;
+
+SELECT * 
+FROM Livro 
+WHERE isbn = '9788577345670';
+
+-- Desenvolva uma procedure para adicionar um novo autor à tabela "Autor"
+
+CREATE PROCEDURE sp_novoAutor
+	@Nome VARCHAR(100),
+	@Nacionalidade VARCHAR(100)
+
+AS
+BEGIN
+
+	IF EXISTS (SELECT 1 FROM AUTOR WHERE nome = @Nome AND nacionalidade = @Nacionalidade)
+	BEGIN
+		PRINT 'Autor já cadastrado!';
+		RETURN;
+	END
+
+	ELSE
+	BEGIN
+		INSERT INTO AUTOR (nome, nacionalidade)
+		VALUES (@Nome, @Nacionalidade);
+
+		PRINT 'Novo autor cadastrado!';
+	END
+
+END
+
+EXEC sp_novoAutor @Nome = 'Fiódor Dosoiévski', @Nacionalidade = 'Rússia';
+
+SELECT * FROM AUTOR
+
+-- Implemente uma procedure para excluir um autor e remover sua associação com os livros na tabela "LivroAutor"
+
+CREATE PROCEDURE sp_excluirAutor
+	@IDautor INT
+
+AS
+BEGIN 
+	IF NOT EXISTS (SELECT 1 FROM AUTOR WHERE id = @IDautor)
+	BEGIN
+		PRINT 'Autor não encontrado!';
+		RETURN;
+	END
+
+	ELSE
+	DELETE FROM LivroAutor 
+	WHERE fk_autor = @IDautor;
+
+	DELETE FROM AUTOR 
+	WHERE id = @IDautor;
+
+	PRINT 'Autor removido!'
+END
+
+EXEC sp_excluirAutor @IDautor = 1;
+
+SELECT * FROM Autor;
+SELECT * FROM LivroAutor;
+
+-- Crie uma procedure que receba o nome de uma categoria e retorne todos os livros dentro dessa categoria
+CREATE PROCEDURE sp_LivroCategoria
+	@IDCategoria INT
+
+AS
+BEGIN 
+	IF NOT EXISTS (SELECT 1 FROM CATEGORIA WHERE id = @IDCategoria)
+	BEGIN
+		PRINT 'Categoria não encontrada!';
+		RETURN;
+	END
+
+	ELSE
+	SELECT L.titulo, C.tipo_categoria
+	FROM LIVRO AS L
+	INNER JOIN CATEGORIA AS C
+	ON L.fk_categoria = C.id
+	WHERE C.id = @IDCategoria;
+END
+
+EXEC sp_LivroCategoria @IDCategoria = 3;
+
+SELECT * FROM CATEGORIA;
