@@ -1,6 +1,6 @@
--- Crie uma procedure que permita inserir uma nova categoria na tabela "Categoria"
+-- 1) Crie uma procedure que permita inserir uma nova categoria na tabela "Categoria"
 
-ALTER PROCEDURE sp_novaCategoria
+CREATE PROCEDURE sp_novaCategoria
 	@TipoCategoria VARCHAR(20)
 
 AS
@@ -26,7 +26,7 @@ EXEC sp_novaCategoria @TipoCategoria = 'Terror';
 
 SELECT * FROM CATEGORIA
 
--- Crie uma procedure para atualizar os detalhes de um livro (por exemplo, título, ano) pelo ISBN
+-- 2) Crie uma procedure para atualizar os detalhes de um livro (por exemplo, título, ano) pelo ISBN
 
 ALTER PROCEDURE sp_AtualizaDados
 	@ISBN VARCHAR(20),
@@ -59,7 +59,7 @@ SELECT *
 FROM Livro 
 WHERE isbn = '9788577345670';
 
--- Desenvolva uma procedure para adicionar um novo autor à tabela "Autor"
+-- 3) Desenvolva uma procedure para adicionar um novo autor à tabela "Autor"
 
 CREATE PROCEDURE sp_novoAutor
 	@Nome VARCHAR(100),
@@ -88,7 +88,7 @@ EXEC sp_novoAutor @Nome = 'Fiódor Dosoiévski', @Nacionalidade = 'Rússia';
 
 SELECT * FROM AUTOR
 
--- Implemente uma procedure para excluir um autor e remover sua associação com os livros na tabela "LivroAutor"
+-- 4) Implemente uma procedure para excluir um autor e remover sua associação com os livros na tabela "LivroAutor"
 
 CREATE PROCEDURE sp_excluirAutor
 	@IDautor INT
@@ -116,16 +116,15 @@ EXEC sp_excluirAutor @IDautor = 1;
 SELECT * FROM Autor;
 SELECT * FROM LivroAutor;
 
--- Crie uma procedure que receba o nome de uma categoria e retorne todos os livros dentro dessa categoria
-CREATE PROCEDURE sp_LivroCategoria
-	@IDCategoria INT
+-- 5) Crie uma procedure que receba o nome de uma categoria e retorne todos os livros dentro dessa categoria
+ALTER PROCEDURE sp_LivroCategoria
+	@IDCategoria VARCHAR(100)
 
 AS
 BEGIN 
-	IF NOT EXISTS (SELECT 1 FROM CATEGORIA WHERE id = @IDCategoria)
+	IF NOT EXISTS (SELECT 1 FROM CATEGORIA WHERE tipo_categoria = @IDCategoria)
 	BEGIN
 		PRINT 'Categoria não encontrada!';
-		RETURN;
 	END
 
 	ELSE
@@ -133,9 +132,110 @@ BEGIN
 	FROM LIVRO AS L
 	INNER JOIN CATEGORIA AS C
 	ON L.fk_categoria = C.id
-	WHERE C.id = @IDCategoria;
+	WHERE C.tipo_categoria = @IDCategoria;
 END
 
-EXEC sp_LivroCategoria @IDCategoria = 3;
+EXEC sp_LivroCategoria @IDCategoria = 'Literatura Juvenil';
 
 SELECT * FROM CATEGORIA;
+
+-- 6) Desenvolva uma procedure que receba o nome de um autor e retorne todos os livros escritros por esse autor
+ALTER PROCEDURE sp_AutordoLivro
+	@NomeAutor VARCHAR(100)
+
+AS
+BEGIN 
+	IF NOT EXISTS (SELECT 1 FROM AUTOR WHERE nome = @NomeAutor)
+	BEGIN
+		PRINT 'Livros não encontrados!';
+	END
+
+	ELSE
+	SELECT L.titulo AS 'Título do livro', A.nome AS 'Autor'
+	FROM LIVRO AS L
+	INNER JOIN LIVROAUTOR AS LA
+		ON LA.fk_livro = L.isbn
+	INNER JOIN AUTOR AS A
+		ON LA.fk_autor = A.id
+	WHERE A.nome = @NomeAutor;
+END
+
+EXEC sp_AutordoLivro @NomeAutor = 'J.K. Rowling';
+
+SELECT * FROM AUTOR
+
+-- 7) Crie uma procedure que liste os livros publicados em um ano específico
+
+CREATE OR ALTER PROCEDURE sp_AnoPublicacao
+	@AnoPublicacao INT
+
+AS
+BEGIN 
+	IF NOT EXISTS (SELECT 1 FROM Livro WHERE ano = @AnoPublicacao)
+	BEGIN
+		PRINT 'Livros não encontrados!';
+	END
+
+	ELSE
+	SELECT L.titulo AS 'Título do livro', L.ano AS 'Ano de publicação'
+	FROM LIVRO AS L
+	WHERE ano = @AnoPublicacao;
+END
+
+EXEC sp_AnoPublicacao @AnoPublicacao = '2013';
+
+SELECT * FROM LIVRO
+
+-- 8) Implemente uma procedure para listar os livros publicados por uma editora específica
+
+CREATE OR ALTER PROCEDURE sp_EditoraLivro
+	@EditoraLivro VARCHAR(100)
+
+AS
+BEGIN 
+	IF NOT EXISTS (SELECT 1 FROM EDITORA WHERE nome = @EditoraLivro)
+	BEGIN
+		PRINT 'Livros não encontrados!';
+	END
+
+	ELSE
+	SELECT L.titulo AS 'Título do livro', E.nome AS 'Editora'
+	FROM LIVRO AS L
+	INNER JOIN EDITORA AS E
+		ON E.id = L.fk_editora
+	WHERE nome = @EditoraLivro;
+END
+
+EXEC sp_EditoraLivro @EditoraLivro = 'Rocco';
+
+SELECT * FROM EDITORA
+
+-- 9) Desenvolva uma procedure que retorne uma lista de livros com ISBNs dentro de uma faixa específica
+
+CREATE OR ALTER PROCEDURE sp_FaixaISBN
+	@FaixaISBN INT
+
+AS
+BEGIN 
+	SELECT isbn
+	FROM LIVRO 
+	WHERE isbn = @FaixaISBN
+
+	IF @FaixaISBN < 9788582302026
+		BEGIN 
+			PRINT 'Está na lista'
+		END
+	ELSE 
+		BEGIN
+			PRINT 'Não esta na lista'
+		END
+END
+
+EXEC sp_FaixaISBN @FaixaISBN = 8532512062;
+
+SELECT * FROM Livro
+
+
+
+-- 10) Crie uma procedure para contar o número de livros em cada categoria
+
