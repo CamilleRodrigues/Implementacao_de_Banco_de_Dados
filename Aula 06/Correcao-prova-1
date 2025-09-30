@@ -1,0 +1,184 @@
+-- QUESTÃO 7
+
+SELECT A.Nome, D.Nome_disciplina, HE.Nota
+FROM ALUNO AS A
+JOIN HISTORICO_ESCOLAR AS HE
+ON A.Numero_aluno = HE.Numero_aluno
+JOIN TURMA AS T
+ON T.Identificacao_turma = HE.Identificacao_turma
+JOIN DISCIPLINA AS D
+ON D.Numero_disciplina = T.Numero_disciplina
+WHERE D.Nome_disciplina = 'Banco de Dados'
+
+-- QUESTÃO 8
+
+SELECT D.Nome_disciplina AS 'Disciplina', D.Numero_disciplina AS 'Número Disciplina', DPR.Nome_disciplina AS 'Pré-Requisito', PR.Numero_pre_requisito AS 'Número do PR'
+FROM DISCIPLINA AS D
+JOIN PRE_REQUISITO AS PR
+ON D.Numero_disciplina = PR.Numero_disciplina
+JOIN DISCIPLINA AS DPR
+ON DPR.Numero_disciplina = PR.Numero_pre_requisito
+
+-- QUESTÃO 9
+
+SELECT A.Nome, D.Nome_disciplina, T.Semestre, T.Ano, HE.Nota
+FROM ALUNO AS A
+JOIN HISTORICO_ESCOLAR AS HE
+ON A.Numero_aluno = HE.Numero_aluno
+JOIN TURMA AS T
+ON T.Identificacao_turma = HE.Identificacao_turma
+JOIN DISCIPLINA AS D
+ON D.Numero_disciplina = T.Numero_disciplina
+WHERE A.Nome = 'Silva'
+
+-- QUESTÃO 10
+
+CREATE FUNCTION fn_StatusAprovacaoAluno (@NomeAluno VARCHAR(50), @Disciplina VARCHAR(50))
+RETURNS VARCHAR(20)
+
+AS
+BEGIN
+	DECLARE @Nota CHAR(1);
+	DECLARE @Status VARCHAR(20);
+
+	SELECT @Nota = HE.Nota
+	FROM ALUNO AS A
+	JOIN HISTORICO_ESCOLAR AS HE
+	ON A.Numero_aluno = HE.Numero_aluno
+	JOIN TURMA AS T
+	ON T.Identificacao_turma = HE.Identificacao_turma
+	JOIN DISCIPLINA AS D
+	ON D.Numero_disciplina = T.Numero_disciplina
+	WHERE A.Nome = @NomeAluno AND D.Nome_disciplina = @Disciplina
+
+	IF @Nota = 'A' OR @Nota = 'B'
+		SET @Status = 'Aprovado'
+	ELSE IF @Nota = 'C'
+		SET @Status = 'Em recuperação'
+	ELSE IF @Nota = 'F'
+		SET @Status = 'Reprovado'
+	ELSE 
+		SET @Status = 'Sem registro'
+	RETURN @Status;
+END
+GO
+
+SELECT dbo.fn_StatusAprovacaoAluno('Silva','Matemática Discreta ') AS 'Status Aprovação';
+SELECT dbo.fn_StatusAprovacaoAluno('Silva','Introdução à Ciência da Computação ') AS 'Status Aprovação';
+
+
+-- QUESTÃO 11
+CREATE OR ALTER FUNCTION fn_ConverterNota (@Nota CHAR(1))
+RETURNS INT
+AS
+BEGIN
+	DECLARE @N INT;
+
+	IF @Nota = 'A'
+		SET @N = 10;
+	ELSE IF @Nota = 'B'
+		SET @N = 9;
+	ELSE IF @Nota = 'C'
+		SET @N = 8;
+	ELSE IF @Nota = 'F'
+		SET @N = 0;
+	ELSE
+		SET @N = NULL;
+	RETURN @N;
+END
+GO
+
+SELECT A.Nome AS 'Aluno', D.Nome_disciplina AS 'Disciplina', HE.Nota AS 'Conceito', dbo.fn_ConverterNota(HE.Nota) AS 'Nota Numérica'
+FROM ALUNO AS A
+JOIN HISTORICO_ESCOLAR AS HE
+ON A.Numero_aluno = he.Numero_aluno
+JOIN TURMA AS T
+ON T.Identificacao_turma = HE.Identificacao_turma
+JOIN DISCIPLINA AS D
+ON D.Numero_disciplina = T.Numero_disciplina
+
+-- QUESTÃO 12
+
+CREATE FUNCTION fn_StatusLotacao (@IDturma INT)
+RETURNS VARCHAR(30)
+AS
+BEGIN
+	DECLARE @Quantidade INT;
+	DECLARE @Status VARCHAR(30);
+
+	SELECT @Quantidade = COUNT(*)
+	FROM HISTORICO_ESCOLAR
+	WHERE Identificacao_turma = @IDturma;
+
+	IF @Quantidade >= 5
+		SET @Status = 'Lotado'
+	ELSE IF @Quantidade BETWEEN 3 AND 4
+		SET @Status = 'Quase cheia'
+	ELSE
+		SET @Status = 'Com vagas'
+	RETURN @Status;
+END
+GO
+
+SELECT DISTINCT T.Identificacao_turma, D.Nome_disciplina, dbo.fn_StatusLotacao(T.Identificacao_turma) AS 'Status'
+FROM HISTORICO_ESCOLAR AS HE
+JOIN TURMA AS T
+ON HE.Identificacao_turma = T.Identificacao_turma
+JOIN DISCIPLINA AS D
+ON T.Numero_disciplina = D.Numero_disciplina
+
+-- QUESTÃO 13
+
+CREATE OR ALTER PROCEDURE usp_CalcularIdadeAluno
+	@NumeroAluno INT
+
+AS 
+BEGIN
+	DECLARE @DataAtual DATE;
+	DECLARE @DataNascimeto DATE;
+	DECLARE @Idade INT;
+
+	SET @DataAtual = GETDATE();
+
+	SELECT @DataNascimeto = A.Data_Nascimento
+	FROM ALUNO AS A
+	WHERE A.Numero_aluno = @NumeroAluno
+
+	SET @Idade = DATEDIFF(YEAR, @DataNascimeto, @DataAtual)
+
+	IF(MONTH(@DataNascimeto) > MONTH(@DataAtual)
+		OR (MONTH(@DataNascimeto) = MONTH(@DataAtual) AND DAY(@DataNascimeto) > DAY(@DataAtual)))
+		SET @Idade = @Idade - 1;
+
+	PRINT @Idade
+END;
+GO
+
+EXEC dbo.usp_CalcularIdadeAluno 11;
+
+
+
+-- QUESTÃO 14
+
+CREATE OR ALTER PROCEDURE usp_AtualizarNota 
+	@NumeroAluno INT,
+	@IdentificacaoTurma INT,
+	@NovaNota CHAR(1)
+
+AS
+BEGIN
+	UPDATE HISTORICO_ESCOLAR
+	SET Nota = @NovaNota
+	WHERE Numero_aluno = @NumeroAluno
+		AND Identificacao_turma = @IdentificacaoTurma;
+	IF (@@ROWCOUNT = 1)
+		PRINT 'Nota alterada';
+	ELSE 
+		PRINT 'Falha: nenhum registro alterado ou parâmetro inválido'
+END
+GO
+
+SELECT *
+FROM HISTORICO_ESCOLAR;
+
+EXEC dbo.usp_AtualizarNota 10, 102, 'C';
